@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>6 aus 49 – Lottosimulator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <p class="eyebrow">LOTTO-SIMULATION</p>
+      <h1>6 aus 49</h1>
+      <p class="subtitle">Wähle sechs Zahlen und teste dein Glück.</p>
+    </header>
+
+    <section class="card" aria-labelledby="selection-title">
+      <div class="section-heading">
+        <h2 id="selection-title">Deine Zahlen</h2>
+        <span id="count" class="count">0 / 6</span>
+      </div>
+      <div id="number-grid" class="number-grid" aria-label="Zahlen von 1 bis 49"></div>
+      <div class="actions">
+        <button id="random-button" class="secondary" type="button">Zufall auswählen</button>
+        <button id="clear-button" class="ghost" type="button">Zurücksetzen</button>
+      </div>
+    </section>
+
+    <button id="draw-button" class="primary" type="button" disabled>Ziehung starten</button>
+
+    <section id="result" class="card result" aria-live="polite" hidden>
+      <div class="section-heading">
+        <h2>Ziehung</h2>
+        <span id="result-count" class="count"></span>
+      </div>
+      <div id="drawn-numbers" class="drawn-numbers"></div>
+      <p id="match-message" class="match-message"></p>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
