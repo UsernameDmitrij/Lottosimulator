@@ -3,12 +3,73 @@ const countLabel = document.getElementById("count");
 const randomButton = document.getElementById("random-button");
 const clearButton = document.getElementById("clear-button");
 const drawButton = document.getElementById("draw-button");
+const soundToggle = document.getElementById("sound-toggle");
 const result = document.getElementById("result");
 const drawnNumbersContainer = document.getElementById("drawn-numbers");
 const resultCount = document.getElementById("result-count");
 const matchMessage = document.getElementById("match-message");
 
 let selected = new Set();
+let soundEnabled = true;
+let audioContext;
+
+function playTone(frequency, startTime = 0, duration = 0.12, type = "sine", volume = 0.07) {
+  if (!soundEnabled) return;
+
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    audioContext ??= new AudioContextClass();
+    if (audioContext.state === "suspended") audioContext.resume();
+
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const start = audioContext.currentTime + startTime;
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, start);
+    gain.gain.setValueAtTime(0.001, start);
+    gain.gain.exponentialRampToValueAtTime(volume, start + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(start);
+    oscillator.stop(start + duration + 0.02);
+  } catch (error) {
+    // Sound is optional; the game remains usable if Web Audio is unavailable.
+  }
+}
+
+function playSelectionSound(isSelected) {
+  playTone(isSelected ? 620 : 380, 0, 0.08, "triangle", 0.045);
+}
+
+function playRandomSound() {
+  [440, 554, 659].forEach((frequency, index) => {
+    playTone(frequency, index * 0.07, 0.12, "sine", 0.04);
+  });
+}
+
+function playDrawSound(matchCount) {
+  [392, 440, 523, 587, 659, 784].forEach((frequency, index) => {
+    playTone(frequency, index * 0.11, 0.16, "sine", 0.045);
+  });
+
+  if (matchCount > 0) {
+    [659, 784, 988].forEach((frequency, index) => {
+      playTone(frequency, 0.78 + index * 0.12, 0.24, "triangle", 0.055);
+    });
+  } else {
+    playTone(220, 0.82, 0.3, "sine", 0.04);
+  }
+}
+
+soundToggle.addEventListener("click", () => {
+  soundEnabled = !soundEnabled;
+  soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+  soundToggle.setAttribute("aria-label", soundEnabled ? "Ton ausschalten" : "Ton einschalten");
+  soundToggle.textContent = soundEnabled ? "🔊 Ton an" : "🔇 Ton aus";
+  if (soundEnabled) playTone(660, 0, 0.1, "sine", 0.04);
+});
 
 for (let number = 1; number <= 49; number += 1) {
   const button = document.createElement("button");
@@ -22,12 +83,16 @@ for (let number = 1; number <= 49; number += 1) {
 }
 
 function toggleNumber(number) {
+  let changed = false;
   if (selected.has(number)) {
     selected.delete(number);
+    changed = true;
   } else if (selected.size < 6) {
     selected.add(number);
+    changed = true;
   }
 
+  if (changed) playSelectionSound(selected.has(number));
   result.hidden = true;
   updateSelection();
 }
@@ -62,6 +127,7 @@ randomButton.addEventListener("click", () => {
   selected = new Set(numbers);
   result.hidden = true;
   updateSelection();
+  playRandomSound();
 });
 
 clearButton.addEventListener("click", () => {
@@ -99,5 +165,6 @@ drawButton.addEventListener("click", () => {
   });
 
   result.hidden = false;
+  playDrawSound(matches.length);
   result.scrollIntoView({ behavior: "smooth", block: "nearest" });
 });
